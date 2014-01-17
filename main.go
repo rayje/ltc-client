@@ -2,20 +2,25 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 	"flag"
 )
 
-
-
 func main() {
-	r := flag.String("r", "small", "The route to call on the server")
-	h := flag.String("h", "localhost", "The host of the server")
-	p := flag.String("p", "8080", "The port of the host server")
+	route := flag.String("r", "small", "The route to call on the server")
+	host := flag.String("h", "localhost", "The host of the server")
+	port := flag.String("p", "8080", "The port of the host server")
+	rate := flag.Uint64("rate", 1, "Requests per second")
+	duration := flag.Duration("duration", 1*time.Second, "Duration of the test")
 	flag.Parse()
 
-	url := "http://"+ *h +":" + *p + "/" + *r
+	url := "http://"+ *host +":" + *port + "/" + *route
 
-	makeRequest(url)
+	res, err := makeRequest(url, *rate, *duration)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(res)
 }

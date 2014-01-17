@@ -1,30 +1,71 @@
 package main
 
+import (
+	"io/ioutil"
+	"net/http"
+	"time"
+)
+
 var client = &http.Client{}
 
-func makeRequest(url string, rate uint64, duration time.Duration) {
-	total := rate * uint64(duration.Seconds())
-	res := make(chan Result, total)
-
+func NewRequest(url string) (http.Request, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Add("Client", "Header")
 
-	startTime := time.Now()
-	resp, err := client.Do(req)
-	endTime := time.Now()
+	return *req, err
+}
+
+func makeRequest(url string, rate uint64, duration time.Duration) (Results, error) {
+	total := rate * uint64(duration.Seconds())
+	res := make(chan Result, total)
+	results := make(Results, total)
+
+	req, err := NewRequest(url)
+	if err != nil {
+		return nil, err
+	}
+
+	go runRequests(rate, &req, res, total)
+
+	for i := 0; i < cap(res); i++ {
+		results[i] = <- res
+	}
+	close(res)
+
+	return results, nil
+}
+
+func runRequests(rate uint64, req *http.Request, res chan Result, total uint64) {
+	throttle := time.Tick(time.Duration(1e9 / rate))
+
+	for i := 0; uint64(i) < total; i++ {
+		<-throttle
+		go runRequest(req, res)
+	}
+}
+
+func runRequest(req *http.Request, res chan Result) {
+	start := time.Now()
+	r, err := client.Do(req)
+
+	result := Result {
+		Timestamp: start,
+		Latency:   time.Since(start),
+		BytesOut:  uint64(req.ContentLength),
+	}
 
 	if err != nil {
-		fmt.Println(err)
-		return
+		result.Error = err.Error()
+	} else {
+		result.Code = uint16(r.StatusCode)
+		if body, err := ioutil.ReadAll(r.Body); err != nil {
+			if result.Code < 200 || result.Code >= 300 {
+				result.Error = string(body)
+			}
+		} else {
+			result.BytesIn = uint64(len(body))
+		}
 	}
 
-	fmt.Println("Route:", url)
-	fmt.Println("==========================")
-	fmt.Println("RTT:", endTime.Sub(startTime))
-
-	fmt.Println("\nHeaders")
-	fmt.Println("--------------------------")
-	for k, v := range resp.Header {
-		fmt.Println(k, v)
-	}
+	res <- result
 }
