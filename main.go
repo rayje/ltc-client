@@ -22,5 +22,5 @@ func main() {
 		return
 	}
 
-	fmt.Println(res)
+	report(res)
 }
