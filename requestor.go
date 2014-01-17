@@ -50,7 +50,7 @@ func runRequest(req *http.Request, res chan Result) {
 
 	result := Result {
 		Timestamp: start,
-		Latency:   time.Since(start),
+		RTT:   time.Since(start),
 		BytesOut:  uint64(req.ContentLength),
 	}
 

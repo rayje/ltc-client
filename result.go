@@ -7,7 +7,7 @@ import (
 type Result struct {
 	Code      uint16
 	Timestamp time.Time
-	Latency   time.Duration
+	RTT   time.Duration
 	BytesOut  uint64
 	BytesIn   uint64
 	Error     string
