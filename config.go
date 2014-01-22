@@ -45,7 +45,11 @@ func getConfig() Config {
 	}
 
 	var config Config
-	json.Unmarshal(file, &config)
+	err = json.Unmarshal(file, &config)
+	if err != nil {
+		fmt.Printf("JSON error: %v\n", err)
+		os.Exit(1)
+	}
 
 	config.setEndpoint(*route, *host, *port)
 	config.setRateDuration(*rate, *duration)
