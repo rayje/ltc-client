@@ -1,10 +1,28 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
 )
+
+type Requestor struct {
+	Rate     uint64
+	Duration time.Duration
+	Config   Config
+}
+
+type Result struct {
+	Code      uint16
+	Timestamp time.Time
+	Duration  time.Duration
+	BytesOut  uint64
+	BytesIn   uint64
+	Error     string
+}
+
+type Results []Result
 
 var client = &http.Client{}
 
@@ -15,20 +33,36 @@ func NewRequest(url string) (http.Request, error) {
 	return *req, err
 }
 
-func makeRequest(url string, rate uint64, duration time.Duration) (Results, error) {
-	total := rate * uint64(duration.Seconds())
+func NewRequestor(config *Config) Requestor {
+	requestor := &Requestor{
+		Rate:     config.Rate,
+		Duration: config.Duration,
+		Config:   *config,
+	}
+
+	return *requestor
+}
+
+func (r *Requestor) Url() string {
+	endpoint := r.Config.Endpoint
+	return fmt.Sprintf("http://%s:%s/%s", endpoint.Host, endpoint.Port, endpoint.Route)
+}
+
+func (r *Requestor) makeRequest(statsd StatsdClient) (Results, error) {
+	total := r.Rate * uint64(r.Duration.Seconds())
 	res := make(chan Result, total)
 	results := make(Results, total)
 
-	req, err := NewRequest(url)
+	req, err := NewRequest(r.Url())
 	if err != nil {
 		return nil, err
 	}
 
-	go runRequests(rate, &req, res, total)
+	go runRequests(r.Rate, &req, res, total)
 
 	for i := 0; i < cap(res); i++ {
-		results[i] = <- res
+		results[i] = <-res
+		statsd.Timing(results[i].Duration)
 	}
 	close(res)
 
@@ -48,9 +82,9 @@ func runRequest(req *http.Request, res chan Result) {
 	start := time.Now()
 	r, err := client.Do(req)
 
-	result := Result {
+	result := Result{
 		Timestamp: start,
-		RTT:   time.Since(start),
+		Duration:  time.Since(start),
 		BytesOut:  uint64(req.ContentLength),
 	}
 
