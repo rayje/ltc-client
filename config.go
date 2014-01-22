@@ -18,7 +18,9 @@ type EndPoint struct {
 	Route string `json:"route"`
 	Host  string `json:"host"`
 	Port  string `json:"port"`
-	Name string `json:"name"`
+	Name  string `json:"name"`
+	Zone  string `json:"zone"`
+	Type  string `json:"zone"`
 }
 
 type Config struct {
@@ -27,17 +29,23 @@ type Config struct {
 	Rate     uint64        `json:"rate"`
 	Duration time.Duration `json:"duration"`
 	Client   string        `json:"client"`
+	Zone     string        `json:"zone"`
 }
 
 func getConfig() Config {
-	route := flag.String("route", "small", "The route to call on the server")
+	route := flag.String("route", "small", "The route to call on the server (small|med|large|xlarge)")
 	host := flag.String("host", "localhost", "The host of the server")
 	port := flag.String("port", "8080", "The port of the host server")
+
 	rate := flag.Uint64("rate", 1, "Requests per second")
-	client := flag.String("client", "localhost", "The name of the client server")
 	duration := flag.Duration("duration", 1*time.Second, "Duration of the test")
-	configFile := flag.String("config", "config.json", "Location of config file")
+
+	client := flag.String("client", "localhost", "The name of the client server")
+	clientzone := flag.String("clientzone", "us-east-1b", "The name of the client server")
 	target := flag.String("target", "localhost", "The name of the target (for graphite)")
+	targetzone := flag.String("targetzone", "us-east-1b", "The name of the aws zone (for graphite)")
+
+	configFile := flag.String("config", "config.json", "Location of config file")
 	flag.Parse()
 
 	file, err := ioutil.ReadFile(*configFile)
@@ -53,14 +61,14 @@ func getConfig() Config {
 		os.Exit(1)
 	}
 
-	config.setEndpoint(*route, *host, *port, *target)
+	config.setEndpoint(*route, *host, *port, *target, *targetzone)
 	config.setRateDuration(*rate, *duration)
-	config.setClient(*client)
+	config.setClient(*client, *clientzone)
 
 	return config
 }
 
-func (c *Config) setEndpoint(route string, host string, port string, name string) {
+func (c *Config) setEndpoint(route string, host string, port string, name string, zone string) {
 	var emptyEndPoint = EndPoint{}
 
 	if c.Endpoint == emptyEndPoint {
@@ -69,6 +77,7 @@ func (c *Config) setEndpoint(route string, host string, port string, name string
 			Host:  host,
 			Port:  port,
 			Name:  name,
+			Zone:  zone,
 		}
 		c.Endpoint = endpoint
 	}
@@ -84,8 +93,12 @@ func (c *Config) setRateDuration(rate uint64, duration time.Duration) {
 	}
 }
 
-func (c *Config) setClient(client string) {
+func (c *Config) setClient(client string, zone string) {
 	if c.Client == "" {
 		c.Client = client
+	}
+
+	if c.Zone == "" {
+		c.Zone = zone
 	}
 }

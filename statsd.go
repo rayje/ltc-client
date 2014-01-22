@@ -9,16 +9,19 @@ import (
 )
 
 type StatsdClient struct {
-	Client string
-	Host   string
-	conn   net.Conn
+	Client     string
+	ClientZone string
+	Target     string
+	TargetZone string
+	Type       string
+	Conn       net.Conn
 }
 
 func NewStatsd(config *Config) StatsdClient {
 	statsdConfig := config.Statsd
 
 	if statsdConfig.Host == "" {
-		fmt.Println("Statsd Error: Host not set")
+		fmt.Println("Statsd Error: Target not set")
 		os.Exit(1)
 	}
 	if statsdConfig.Port == "" {
@@ -31,19 +34,38 @@ func NewStatsd(config *Config) StatsdClient {
 		panic(err)
 	}
 
-	return StatsdClient{config.Client, config.Endpoint.Name, conn}
+	return StatsdClient{
+		Client:     config.Client,
+		ClientZone: config.Zone,
+		Target:     config.Endpoint.Name,
+		TargetZone: config.Endpoint.Zone,
+		Type:       config.Endpoint.Route,
+		Conn:       conn,
+	}
 }
 
-func (c *StatsdClient) Timing(duration time.Duration) {
-	payload := "latency." + c.Client + "." + c.Host
-	payload += ".timing:"
-	// payload += strconv.Itoa(int(duration/time.Millisecond))
+func (c *StatsdClient) Timing(duration time.Duration, readTime time.Duration) {
+	payload := "latency."
+	payload += c.Client + "-" + c.ClientZone + "."
+	payload += c.Target + "-" + c.TargetZone + "."
+	payload += c.Type + ":"
+	// payload += strconv.Itoa(int(duration / time.Millisecond))
 	payload += strconv.Itoa(int(duration.Nanoseconds()))
 	payload += "|ms"
 
 	c.Send(payload)
+
+	readPayload := "latency."
+	readPayload += c.Client + "-" + c.ClientZone + "."
+	readPayload += c.Target + "-" + c.TargetZone + "."
+	readPayload += c.Type + "-readtime:"
+	// readPayload += strconv.Itoa(int(duration / time.Millisecond))
+	readPayload += strconv.Itoa(int(readTime.Nanoseconds()))
+	readPayload += "|ms"
+
+	c.Send(readPayload)
 }
 
 func (c *StatsdClient) Send(payload string) {
-	c.conn.Write([]byte(payload))
+	c.Conn.Write([]byte(payload))
 }

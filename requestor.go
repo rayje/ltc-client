@@ -20,6 +20,7 @@ type Result struct {
 	BytesOut  uint64
 	BytesIn   uint64
 	Error     string
+	ReadTime  time.Duration
 }
 
 type Results []Result
@@ -61,7 +62,7 @@ func (r *Requestor) makeRequest(statsd StatsdClient) (Results, error) {
 
 	for i := 0; i < cap(res); i++ {
 		results[i] = <-res
-		statsd.Timing(results[i].Duration)
+		statsd.Timing(results[i].Duration, results[i].ReadTime)
 	}
 	close(res)
 
@@ -97,6 +98,10 @@ func runRequest(req *http.Request, res chan Result) {
 			}
 		} else {
 			result.BytesIn = uint64(len(body))
+			result.ReadTime, err = time.ParseDuration(r.Header.Get("ReadTime"))
+			if err != nil {
+				fmt.Println("Error parsing read time: " + r.Header.Get("ReadTime"))
+			}
 		}
 	}
 
