@@ -8,9 +8,15 @@ import (
 )
 
 type Requestor struct {
-	Rate     uint64
+	Rate     float64
 	Duration time.Duration
 	EndPoint EndPoint
+	ApigeeToken string
+	Apigee ApigeeConfig
+	Statsd StatsdClient
+	Config Config
+	Results Results
+	NumResults uint64
 }
 
 type Result struct {
@@ -27,55 +33,113 @@ type Results []Result
 
 var client = &http.Client{}
 
-func NewRequest(url string) (http.Request, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	req.Header.Add("Client", "Header")
+func (r *Requestor) NewRequest() (http.Request, error) {
+	req, err := http.NewRequest("GET", r.Url(), nil)
+	if err != nil {
+		return *req, err
+	}
+
+	if r.ApigeeToken != "" {
+		req.Header.Set("Authorization", "Bearer " + r.ApigeeToken)
+	}
 
 	return *req, err
 }
 
-func NewRequestor(config *Config) Requestor {
-	requestor := &Requestor{
+func NewRequestor(config *Config, statsd StatsdClient) (Requestor, error) {
+	var apigeeToken string
+	var requestor Requestor
+	var err error
+
+	if config.UseApigee {
+		apigeeToken, err = getApigeeToken(config)
+		if err != nil {
+			return requestor, err
+		}
+	}
+
+	requestor = Requestor{
 		Rate:     config.Rate,
 		Duration: config.Duration,
 		EndPoint: config.Endpoint,
+		ApigeeToken: apigeeToken,
+		Apigee: config.Apigee,
+		Statsd: statsd,
+		Config: *config,
 	}
 
-	return *requestor
+	return requestor, nil
 }
 
 func (r *Requestor) Url() string {
-	return fmt.Sprintf("http://%s:%s/%s", r.EndPoint.Host, r.EndPoint.Port, r.EndPoint.Route)
+	if r.ApigeeToken != "" {
+		return fmt.Sprintf("%s/%s?apikey=%s", r.Apigee.Apiurl, r.EndPoint.Route, r.Apigee.Apikey)
+	} else {
+		return fmt.Sprintf("http://%s:%s/%s", r.EndPoint.Host, r.EndPoint.Port, r.EndPoint.Route)
+	}
 }
 
-func (r *Requestor) makeRequest(statsd StatsdClient) (Results, error) {
-	total := r.Rate * uint64(r.Duration.Seconds())
-	res := make(chan Result, total)
-	results := make(Results, total)
+func (r *Requestor) MakeRequest() (Results, error) {
+	total := uint64(r.Rate * float64(r.Duration.Seconds()))
+	fmt.Println("Total Requests:", total)
 
-	req, err := NewRequest(r.Url())
+	res := make(chan Result, total)
+	done := make(chan string)
+	r.Results = make(Results, total)
+
+	req, err := r.NewRequest()
 	if err != nil {
 		return nil, err
 	}
 
-	go runRequests(r.Rate, &req, res, total)
+	if r.ApigeeToken != "" {
+		go tokenRefresh(&r.Config, &req, done)
+	}
+
+	go runRequests(r.Rate, &req, res, total, done)
 
 	for i := 0; i < cap(res); i++ {
-		results[i] = <-res
-		statsd.Timing(results[i].Duration, results[i].ReadTime)
+		r.Results[i] = <-res
+		r.NumResults += 1
+		r.Statsd.Timing(r.Results[i].Duration, r.Results[i].ReadTime)
 	}
 	close(res)
 
-	return results, nil
+	return r.Results, nil
 }
 
-func runRequests(rate uint64, req *http.Request, res chan Result, total uint64) {
+func (r *Requestor) GetResults() Results {
+	return r.Results[:r.NumResults]
+}
+
+func tokenRefresh(config *Config, req *http.Request, done chan string) {
+	refresh := time.Tick(time.Hour - (5 * time.Minute))
+
+	for {
+		select {
+		case <-done:
+		    return
+		case <-refresh:
+			token, err := getApigeeToken(config)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			req.Header.Set("Authorization", "Bearer " + token)
+		}
+	}
+}
+
+func runRequests(rate float64, req *http.Request, res chan Result, total uint64, done chan string) {
 	throttle := time.Tick(time.Duration(1e9 / rate))
+	fmt.Println("Throttle:", time.Duration(1e9 / rate))
 
 	for i := 0; uint64(i) < total; i++ {
 		<-throttle
 		go runRequest(req, res)
 	}
+
+	done <- "done"
 }
 
 func runRequest(req *http.Request, res chan Result) {
@@ -93,14 +157,30 @@ func runRequest(req *http.Request, res chan Result) {
 	} else {
 		result.Code = uint16(r.StatusCode)
 		if body, err := ioutil.ReadAll(r.Body); err != nil {
-			if result.Code < 200 || result.Code >= 300 {
-				result.Error = string(body)
-			}
+			fmt.Println(err)
 		} else {
-			result.BytesIn = uint64(len(body))
-			result.ReadTime, err = time.ParseDuration(r.Header.Get("ReadTime"))
-			if err != nil {
-				fmt.Println("Error parsing read time: " + r.Header.Get("ReadTime"))
+			if result.Code < 200 || result.Code >= 300 {
+				fmt.Println("======================================")
+				fmt.Println("Status: " + r.Status)
+				for k, v := range r.Header {
+					fmt.Println(k, ":", v)
+				}
+				fmt.Println(string(body))
+				fmt.Println("======================================")
+			} else {
+				result.BytesIn = uint64(len(body))
+				result.ReadTime, err = time.ParseDuration(r.Header.Get("ReadTime"))
+				if err != nil {
+					fmt.Println("======================================")
+					fmt.Println("Error parsing read time")
+					fmt.Println("--------------------------------------")
+					fmt.Println("Status: " + r.Status)
+					for k, v := range r.Header {
+						fmt.Println(k, ":", v)
+					}
+					fmt.Println(string(body))
+					fmt.Println("======================================")
+				}
 			}
 		}
 	}

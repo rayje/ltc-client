@@ -14,6 +14,13 @@ type StatsdConfig struct {
 	Port string `json:"port"`
 }
 
+type ApigeeConfig struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Apikey   string `json:"apikey"`
+	Apiurl   string `json:"apiurl"`
+}
+
 type EndPoint struct {
 	Route string `json:"route"`
 	Host  string `json:"host"`
@@ -24,12 +31,15 @@ type EndPoint struct {
 }
 
 type Config struct {
-	Statsd   StatsdConfig  `json:"statsd"`
-	Endpoint EndPoint      `json:"endpoint"`
-	Rate     uint64        `json:"rate"`
-	Duration time.Duration `json:"duration"`
-	Client   string        `json:"client"`
-	Zone     string        `json:"zone"`
+	Statsd    StatsdConfig  `json:"statsd"`
+	Apigee    ApigeeConfig  `json:"apigee"`
+	Endpoint  EndPoint      `json:"endpoint"`
+	Rate      float64       `json:"rate"`
+	Duration  time.Duration `json:"duration"`
+	Client    string        `json:"client"`
+	Zone      string        `json:"zone"`
+	UseApigee bool          `json:"useapigee"`
+	ReportInterval time.Duration`json:"reportInterval"`
 }
 
 func getConfig() Config {
@@ -37,7 +47,7 @@ func getConfig() Config {
 	host := flag.String("host", "localhost", "The host of the server")
 	port := flag.String("port", "8080", "The port of the host server")
 
-	rate := flag.Uint64("rate", 1, "Requests per second")
+	rate := flag.Float64("rate", 1.0, "Requests per second")
 	duration := flag.Duration("duration", 1*time.Second, "Duration of the test")
 
 	client := flag.String("client", "localhost", "The name of the client server")
@@ -45,6 +55,8 @@ func getConfig() Config {
 	target := flag.String("target", "localhost", "The name of the target (for graphite)")
 	targetzone := flag.String("targetzone", "us-east-1b", "The name of the aws zone (for graphite)")
 
+	reportInterval := flag.Duration("rint", 15*time.Minute, "Interval to print reports")
+	apigee := flag.Bool("apigee", false, "Use an apigee request")
 	configFile := flag.String("config", "config.json", "Location of config file")
 	flag.Parse()
 
@@ -64,6 +76,8 @@ func getConfig() Config {
 	config.setEndpoint(*route, *host, *port, *target, *targetzone)
 	config.setRateDuration(*rate, *duration)
 	config.setClient(*client, *clientzone)
+	config.setReportIntercal(*reportInterval)
+	config.UseApigee = *apigee
 
 	return config
 }
@@ -83,7 +97,7 @@ func (c *Config) setEndpoint(route string, host string, port string, name string
 	}
 }
 
-func (c *Config) setRateDuration(rate uint64, duration time.Duration) {
+func (c *Config) setRateDuration(rate float64, duration time.Duration) {
 	if c.Rate == 0 {
 		c.Rate = rate
 	}
@@ -100,5 +114,11 @@ func (c *Config) setClient(client string, zone string) {
 
 	if c.Zone == "" {
 		c.Zone = zone
+	}
+}
+
+func (c *Config) setReportIntercal(interval time.Duration) {
+	if (c.ReportInterval == 0) {
+		c.ReportInterval = interval
 	}
 }
