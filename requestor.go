@@ -10,7 +10,7 @@ import (
 type Requestor struct {
 	Rate     uint64
 	Duration time.Duration
-	Config   Config
+	EndPoint EndPoint
 }
 
 type Result struct {
@@ -37,15 +37,14 @@ func NewRequestor(config *Config) Requestor {
 	requestor := &Requestor{
 		Rate:     config.Rate,
 		Duration: config.Duration,
-		Config:   *config,
+		EndPoint: config.Endpoint,
 	}
 
 	return *requestor
 }
 
 func (r *Requestor) Url() string {
-	endpoint := r.Config.Endpoint
-	return fmt.Sprintf("http://%s:%s/%s", endpoint.Host, endpoint.Port, endpoint.Route)
+	return fmt.Sprintf("http://%s:%s/%s", r.EndPoint.Host, r.EndPoint.Port, r.EndPoint.Route)
 }
 
 func (r *Requestor) makeRequest(statsd StatsdClient) (Results, error) {

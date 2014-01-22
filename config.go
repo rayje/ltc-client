@@ -18,6 +18,7 @@ type EndPoint struct {
 	Route string `json:"route"`
 	Host  string `json:"host"`
 	Port  string `json:"port"`
+	Name string `json:"name"`
 }
 
 type Config struct {
@@ -36,6 +37,7 @@ func getConfig() Config {
 	client := flag.String("client", "localhost", "The name of the client server")
 	duration := flag.Duration("duration", 1*time.Second, "Duration of the test")
 	configFile := flag.String("config", "config.json", "Location of config file")
+	target := flag.String("target", "localhost", "The name of the target (for graphite)")
 	flag.Parse()
 
 	file, err := ioutil.ReadFile(*configFile)
@@ -51,14 +53,14 @@ func getConfig() Config {
 		os.Exit(1)
 	}
 
-	config.setEndpoint(*route, *host, *port)
+	config.setEndpoint(*route, *host, *port, *target)
 	config.setRateDuration(*rate, *duration)
 	config.setClient(*client)
 
 	return config
 }
 
-func (c *Config) setEndpoint(route string, host string, port string) {
+func (c *Config) setEndpoint(route string, host string, port string, name string) {
 	var emptyEndPoint = EndPoint{}
 
 	if c.Endpoint == emptyEndPoint {
@@ -66,6 +68,7 @@ func (c *Config) setEndpoint(route string, host string, port string) {
 			Route: route,
 			Host:  host,
 			Port:  port,
+			Name:  name,
 		}
 		c.Endpoint = endpoint
 	}

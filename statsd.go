@@ -31,7 +31,7 @@ func NewStatsd(config *Config) StatsdClient {
 		panic(err)
 	}
 
-	return StatsdClient{config.Client, config.Endpoint.Host, conn}
+	return StatsdClient{config.Client, config.Endpoint.Name, conn}
 }
 
 func (c *StatsdClient) Timing(duration time.Duration) {
@@ -45,6 +45,5 @@ func (c *StatsdClient) Timing(duration time.Duration) {
 }
 
 func (c *StatsdClient) Send(payload string) {
-	fmt.Println("Sending: " + payload)
 	c.conn.Write([]byte(payload))
 }
