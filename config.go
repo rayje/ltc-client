@@ -31,15 +31,16 @@ type EndPoint struct {
 }
 
 type Config struct {
-	Statsd    StatsdConfig  `json:"statsd"`
-	Apigee    ApigeeConfig  `json:"apigee"`
-	Endpoint  EndPoint      `json:"endpoint"`
-	Rate      float64       `json:"rate"`
-	Duration  time.Duration `json:"duration"`
-	Client    string        `json:"client"`
-	Zone      string        `json:"zone"`
-	UseApigee bool          `json:"useapigee"`
-	ReportInterval time.Duration`json:"reportInterval"`
+	Statsd         StatsdConfig  `json:"statsd"`
+	Apigee         ApigeeConfig  `json:"apigee"`
+	Endpoint       EndPoint      `json:"endpoint"`
+	Rate           float64       `json:"rate"`
+	Duration       time.Duration `json:"duration"`
+	Client         string        `json:"client"`
+	Zone           string        `json:"zone"`
+	UseApigee      bool          `json:"useapigee"`
+	ReportInterval time.Duration `json:"reportInterval"`
+	Nonce          bool          `json:"nonce"`
 }
 
 func getConfig() Config {
@@ -55,6 +56,7 @@ func getConfig() Config {
 	target := flag.String("target", "localhost", "The name of the target (for graphite)")
 	targetzone := flag.String("targetzone", "us-east-1b", "The name of the aws zone (for graphite)")
 
+	nonce := flag.Bool("nonce", false, "Use a nonce for each request")
 	reportInterval := flag.Duration("rint", 15*time.Minute, "Interval to print reports")
 	apigee := flag.Bool("apigee", false, "Use an apigee request")
 	configFile := flag.String("config", "config.json", "Location of config file")
@@ -76,7 +78,8 @@ func getConfig() Config {
 	config.setEndpoint(*route, *host, *port, *target, *targetzone)
 	config.setRateDuration(*rate, *duration)
 	config.setClient(*client, *clientzone)
-	config.setReportIntercal(*reportInterval)
+	config.setReportInterval(*reportInterval)
+	config.Nonce = *nonce
 	config.UseApigee = *apigee
 
 	return config
@@ -117,8 +120,8 @@ func (c *Config) setClient(client string, zone string) {
 	}
 }
 
-func (c *Config) setReportIntercal(interval time.Duration) {
-	if (c.ReportInterval == 0) {
+func (c *Config) setReportInterval(interval time.Duration) {
+	if c.ReportInterval == 0 {
 		c.ReportInterval = interval
 	}
 }

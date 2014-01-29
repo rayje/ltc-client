@@ -5,6 +5,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+    "math/rand"
+    "net/url"
+
 )
 
 type Requestor struct {
@@ -17,6 +20,7 @@ type Requestor struct {
 	Config Config
 	Results Results
 	NumResults uint64
+	Nonce bool
 }
 
 type Result struct {
@@ -66,6 +70,7 @@ func NewRequestor(config *Config, statsd StatsdClient) (Requestor, error) {
 		Apigee: config.Apigee,
 		Statsd: statsd,
 		Config: *config,
+		Nonce: config.Nonce,
 	}
 
 	return requestor, nil
@@ -96,7 +101,7 @@ func (r *Requestor) MakeRequest() (Results, error) {
 		go tokenRefresh(&r.Config, &req, done)
 	}
 
-	go runRequests(r.Rate, &req, res, total, done)
+	go runRequests(r.Rate, &req, res, total, done, r.Nonce)
 
 	for i := 0; i < cap(res); i++ {
 		r.Results[i] = <-res
@@ -130,19 +135,30 @@ func tokenRefresh(config *Config, req *http.Request, done chan string) {
 	}
 }
 
-func runRequests(rate float64, req *http.Request, res chan Result, total uint64, done chan string) {
+func runRequests(rate float64, req *http.Request, res chan Result, total uint64, done chan string, nonce bool) {
 	throttle := time.Tick(time.Duration(1e9 / rate))
 	fmt.Println("Throttle:", time.Duration(1e9 / rate))
 
 	for i := 0; uint64(i) < total; i++ {
 		<-throttle
-		go runRequest(req, res)
+		go runRequest(req, res, nonce)
 	}
 
 	done <- "done"
 }
 
-func runRequest(req *http.Request, res chan Result) {
+func runRequest(req *http.Request, res chan Result, nonce bool) {
+	if nonce {
+		var err error
+	    rand.Seed( time.Now().UTC().UnixNano())
+	    req.URL, err = url.Parse(req.URL.String() + "?test=" + randomString(100))
+
+	    if err != nil {
+	    	fmt.Println("Error updating url")
+	    	return
+	    }
+	}
+
 	start := time.Now()
 	r, err := client.Do(req)
 
@@ -186,4 +202,16 @@ func runRequest(req *http.Request, res chan Result) {
 	}
 
 	res <- result
+}
+
+func randomString (l int ) string {
+    bytes := make([]byte, l)
+    for i:=0 ; i<l ; i++ {
+        bytes[i] = byte(randInt(65,90))
+    }
+    return string(bytes)
+}
+
+func randInt(min int , max int) int {
+    return min + rand.Intn(max-min)
 }
