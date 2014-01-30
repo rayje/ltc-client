@@ -160,8 +160,6 @@ func runRequest(req *http.Request, res chan Result, nonce bool) {
 	    	nurl += "&apikey=" + apikey
 	    }
 
-	    fmt.Println(nurl)
-
 	    req.URL, err = url.Parse(nurl)
 	    if err != nil {
 	    	fmt.Println("Error updating url")
