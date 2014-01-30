@@ -7,7 +7,6 @@ import (
 	"time"
     "math/rand"
     "net/url"
-
 )
 
 type Requestor struct {
@@ -151,8 +150,16 @@ func runRequest(req *http.Request, res chan Result, nonce bool) {
 	if nonce {
 		var err error
 	    rand.Seed( time.Now().UTC().UnixNano())
-	    req.URL, err = url.Parse(req.URL.String() + "?test=" + randomString(100))
+	    
 
+	    query := req.URL.RawQuery
+	    nurl := fmt.Sprintf("%s://%s%s?test=%s", req.URL.Scheme, req.URL.Host, req.URL.Path, randomString(100))
+
+	    if query != "" {
+	    	nurl += "&" + query
+	    }
+
+	    req.URL, err = url.Parse(nurl)
 	    if err != nil {
 	    	fmt.Println("Error updating url")
 	    	return
