@@ -152,12 +152,15 @@ func runRequest(req *http.Request, res chan Result, nonce bool) {
 	    rand.Seed( time.Now().UTC().UnixNano())
 	    
 
-	    query := req.URL.RawQuery
+	    queryValues := req.URL.Query()
+	    apikey := queryValues.Get("apikey")
 	    nurl := fmt.Sprintf("%s://%s%s?test=%s", req.URL.Scheme, req.URL.Host, req.URL.Path, randomString(100))
 
-	    if query != "" {
-	    	nurl += "&" + query
+	    if apikey != "" {
+	    	nurl += "&apikey=" + apikey
 	    }
+
+	    fmt.Println(nurl)
 
 	    req.URL, err = url.Parse(nurl)
 	    if err != nil {
