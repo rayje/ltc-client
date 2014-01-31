@@ -54,6 +54,23 @@ func report(results []Result, name string) {
 	fmt.Printf("\tmin:\t%s\n", min)
 	fmt.Printf("\tmax:\t%s\n", max)
 	fmt.Printf("\tiqr:\t%s\n", time.Duration(_75 - _25) )
+
+	fmt.Println("\nPercentiles:")
+	calc := NewCalculator(results, totalRtt.Nanoseconds())
+	calc.Sort()
+
+	v1_99  := calc.GetPercentile1(0.99)
+	v1_999 := calc.GetPercentile1(0.999)
+	v2_99  := calc.GetPercentile2(0.99)
+	v2_999 := calc.GetPercentile2(0.999)
+
+	fmt.Println("version1:")
+	fmt.Printf("\t0.99:\t%s\n", v1_99)
+	fmt.Printf("\t0.999:\t%s\n", v1_999)		
+	fmt.Println("\nversion2:")
+	fmt.Printf("\t0.99:\t%s\n", v2_99)
+	fmt.Printf("\t0.999:\t%s\n", v2_999)		
+
 	fmt.Println(strings.Repeat("=", 30))
 }
 

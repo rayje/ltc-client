@@ -22,18 +22,6 @@ type Requestor struct {
 	Nonce bool
 }
 
-type Result struct {
-	Code      uint16
-	Timestamp time.Time
-	Duration  time.Duration
-	BytesOut  uint64
-	BytesIn   uint64
-	Error     string
-	ReadTime  time.Duration
-}
-
-type Results []Result
-
 var client = &http.Client{}
 
 func (r *Requestor) NewRequest() (http.Request, error) {
