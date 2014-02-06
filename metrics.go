@@ -35,7 +35,7 @@ func NewMetrics(results []Result) Metrics {
 	total := float64(len(results))
 	mean := float64(totalRtt)/total
 
-	calc := Metrics{
+	metric := Metrics{
 		Results: results,
 		Min: min,
 		Max: max,
@@ -44,7 +44,7 @@ func NewMetrics(results []Result) Metrics {
 		Total: total,
 	}
 
-	return calc
+	return metric
 }
 
 func (c *Metrics) Sort() {
@@ -82,3 +82,4 @@ func (c *Metrics) GetPercentile(p float64) time.Duration {
 
 	return time.Duration(percentile)
 }
+

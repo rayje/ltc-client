@@ -31,6 +31,8 @@ func main() {
 		complete <- "complete"
 	}
 	report(results, "final")
+	dumpToFile(results)
+	dumpReadToFile(results)
 }
 
 func intervalReports(requestor *Requestor, config *Config, complete chan string) {
@@ -41,7 +43,6 @@ func intervalReports(requestor *Requestor, config *Config, complete chan string)
 	for {
 		select {
 		case <-complete:
-			fmt.Println("Got complete in reports")
 		    return
 		case <-runReport:
 			results = requestor.GetResults()

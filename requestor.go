@@ -2,11 +2,8 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
-    "math/rand"
-    "net/url"
 )
 
 type Requestor struct {
@@ -134,80 +131,4 @@ func runRequests(rate float64, req *http.Request, res chan Result, total uint64,
 	done <- "done"
 }
 
-func runRequest(req *http.Request, res chan Result, nonce bool) {
-	if nonce {
-		var err error
-	    rand.Seed( time.Now().UTC().UnixNano())
-	    
 
-	    queryValues := req.URL.Query()
-	    apikey := queryValues.Get("apikey")
-	    nurl := fmt.Sprintf("%s://%s%s?test=%s", req.URL.Scheme, req.URL.Host, req.URL.Path, randomString(100))
-
-	    if apikey != "" {
-	    	nurl += "&apikey=" + apikey
-	    }
-
-	    req.URL, err = url.Parse(nurl)
-	    if err != nil {
-	    	fmt.Println("Error updating url")
-	    	return
-	    }
-	}
-
-	start := time.Now()
-	r, err := client.Do(req)
-
-	result := Result{
-		Timestamp: start,
-		Duration:  time.Since(start),
-		BytesOut:  uint64(req.ContentLength),
-	}
-
-	if err != nil {
-		result.Error = err.Error()
-	} else {
-		result.Code = uint16(r.StatusCode)
-		if body, err := ioutil.ReadAll(r.Body); err != nil {
-			fmt.Println(err)
-		} else {
-			if result.Code < 200 || result.Code >= 300 {
-				fmt.Println("======================================")
-				fmt.Println("Status: " + r.Status)
-				for k, v := range r.Header {
-					fmt.Println(k, ":", v)
-				}
-				fmt.Println(string(body))
-				fmt.Println("======================================")
-			} else {
-				result.BytesIn = uint64(len(body))
-				result.ReadTime, err = time.ParseDuration(r.Header.Get("ReadTime"))
-				if err != nil {
-					fmt.Println("======================================")
-					fmt.Println("Error parsing read time")
-					fmt.Println("--------------------------------------")
-					fmt.Println("Status: " + r.Status)
-					for k, v := range r.Header {
-						fmt.Println(k, ":", v)
-					}
-					fmt.Println(string(body))
-					fmt.Println("======================================")
-				}
-			}
-		}
-	}
-
-	res <- result
-}
-
-func randomString (l int ) string {
-    bytes := make([]byte, l)
-    for i:=0 ; i<l ; i++ {
-        bytes[i] = byte(randInt(65,90))
-    }
-    return string(bytes)
-}
-
-func randInt(min int , max int) int {
-    return min + rand.Intn(max-min)
-}

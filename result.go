@@ -13,6 +13,8 @@ type Result struct {
 	BytesIn   uint64
 	Error     string
 	ReadTime  time.Duration
+	FanDuration []int64
+	ReadTimes string
 }
 
 type Results []Result
