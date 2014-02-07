@@ -41,6 +41,7 @@ type Config struct {
 	UseApigee      bool          `json:"useapigee"`
 	ReportInterval time.Duration `json:"reportInterval"`
 	Nonce          bool          `json:"nonce"`
+	Fan			   bool          `json:"fan"`
 }
 
 func getConfig() Config {
@@ -56,6 +57,7 @@ func getConfig() Config {
 	target := flag.String("target", "localhost", "The name of the target (for graphite)")
 	targetzone := flag.String("targetzone", "us-east-1b", "The name of the aws zone (for graphite)")
 
+	fan := flag.Bool("fan", false, "Use a nonce for each request")
 	nonce := flag.Bool("nonce", false, "Use a nonce for each request")
 	reportInterval := flag.Duration("rint", 15*time.Minute, "Interval to print reports")
 	apigee := flag.Bool("apigee", false, "Use an apigee request")
@@ -81,6 +83,7 @@ func getConfig() Config {
 	config.setReportInterval(*reportInterval)
 	config.Nonce = *nonce
 	config.UseApigee = *apigee
+	config.Fan = *fan
 
 	return config
 }

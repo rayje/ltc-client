@@ -83,7 +83,12 @@ func (c *FanMetrics) GetPercentile(p float64) time.Duration {
 	r := (float64(len(c.Results)) + 1.0) * p
 	ir, fr := math.Modf(r)
 
-	v1 := float64(c.Results[int(ir)-1])
+	var v1 float64
+	if ir >= float64(len(c.Results)) {
+		v1 = float64(c.Results[len(c.Results)-1])
+	} else {
+		v1 = float64(c.Results[int(ir)-1])
+	}
 
 	if fr > 0.0 && ir < float64(len(c.Results)){
 		v2 := float64(c.Results[int(ir)])

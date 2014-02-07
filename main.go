@@ -30,9 +30,13 @@ func main() {
 	if reportsInterval {
 		complete <- "complete"
 	}
-	report(results, "final")
+	report(results, "final", config.Fan)
 	dumpToFile(results)
-	dumpReadToFile(results)
+
+	if config.Fan {
+		dumpFanToFile(results)
+		dumpReadToFile(results)
+	}
 }
 
 func intervalReports(requestor *Requestor, config *Config, complete chan string) {
@@ -46,7 +50,7 @@ func intervalReports(requestor *Requestor, config *Config, complete chan string)
 		    return
 		case <-runReport:
 			results = requestor.GetResults()
-			report(results, requestor.Url())
+			report(results, requestor.Url(), config.Fan)
 		}
 	}
 }
