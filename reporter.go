@@ -93,7 +93,11 @@ func dumpReadToFile(results []Result) {
 
     	for i := 0; i < len(times); i++ {
 	    	duration, err = time.ParseDuration(times[i])
-	    	check(err)
+	    	if err != nil {
+	    		fmt.Println(err)
+	    		fmt.Println("index:", i, times[i])
+	    		duration = time.Duration(0)
+	    	}
 	    	durations[i] = fmt.Sprintf("%d", duration.Nanoseconds())
 	    }
 
