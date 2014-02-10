@@ -31,12 +31,13 @@ func main() {
 		complete <- "complete"
 	}
 	dumpToFile(results)
-	report(results, "final", config.Fan)
 
 	if config.Fan {
 		dumpFanToFile(results)
 		dumpReadToFile(results)
 	}
+
+	report(results, "final", config.Fan)
 }
 
 func intervalReports(requestor *Requestor, config *Config, complete chan string) {
