@@ -30,8 +30,8 @@ func main() {
 	if reportsInterval {
 		complete <- "complete"
 	}
-	report(results, "final", config.Fan)
 	dumpToFile(results)
+	report(results, "final", config.Fan)
 
 	if config.Fan {
 		dumpFanToFile(results)
