@@ -58,7 +58,7 @@ func getConfig() Config {
 	target := flag.String("target", "localhost", "The name of the target (for graphite)")
 	targetzone := flag.String("targetzone", "us-east-1b", "The name of the aws zone (for graphite)")
 
-	fan := flag.Bool("fan", false, "Use a nonce for each request")
+	fan := flag.Bool("fan", false, "Report fan in final results")
 	nonce := flag.Bool("nonce", false, "Use a nonce for each request")
 	reportInterval := flag.Duration("rint", 15*time.Minute, "Interval to print reports")
 	apigee := flag.Bool("apigee", false, "Use an apigee request")
