@@ -64,7 +64,7 @@ func (r *Requestor) Url() string {
 	if r.ApigeeToken != "" {
 		return fmt.Sprintf("%s/%s?apikey=%s", r.Apigee.Apiurl, r.EndPoint.Route, r.Apigee.Apikey)
 	} else {
-		return fmt.Sprintf("http://%s:%s/%s", r.EndPoint.Host, r.EndPoint.Port, r.EndPoint.Route)
+		return fmt.Sprintf("%s://%s:%s/%s", r.EndPoint.Protocol, r.EndPoint.Host, r.EndPoint.Port, r.EndPoint.Route)
 	}
 }
 

@@ -28,6 +28,7 @@ type EndPoint struct {
 	Name  string `json:"name"`
 	Zone  string `json:"zone"`
 	Type  string `json:"zone"`
+	Protocol string `json:protocol"`
 }
 
 type Config struct {
@@ -62,6 +63,7 @@ func getConfig() Config {
 	reportInterval := flag.Duration("rint", 15*time.Minute, "Interval to print reports")
 	apigee := flag.Bool("apigee", false, "Use an apigee request")
 	configFile := flag.String("config", "config.json", "Location of config file")
+	https := flag.Bool("https", false, "Use https as the transfer protocol.")
 	flag.Parse()
 
 	file, err := ioutil.ReadFile(*configFile)
@@ -77,7 +79,7 @@ func getConfig() Config {
 		os.Exit(1)
 	}
 
-	config.setEndpoint(*route, *host, *port, *target, *targetzone)
+	config.setEndpoint(*route, *host, *port, *target, *targetzone, *https)
 	config.setRateDuration(*rate, *duration)
 	config.setClient(*client, *clientzone)
 	config.setReportInterval(*reportInterval)
@@ -88,7 +90,7 @@ func getConfig() Config {
 	return config
 }
 
-func (c *Config) setEndpoint(route string, host string, port string, name string, zone string) {
+func (c *Config) setEndpoint(route string, host string, port string, name string, zone string, https bool) {
 	var emptyEndPoint = EndPoint{}
 
 	if c.Endpoint == emptyEndPoint {
@@ -100,6 +102,12 @@ func (c *Config) setEndpoint(route string, host string, port string, name string
 			Zone:  zone,
 		}
 		c.Endpoint = endpoint
+	}
+
+	if https {
+		c.Endpoint.Protocol = "https"
+	} else {
+		c.Endpoint.Protocol = "http"
 	}
 }
 
