@@ -12,7 +12,7 @@ type Requestor struct {
 	EndPoint EndPoint
 	ApigeeToken string
 	Apigee ApigeeConfig
-	Statsd StatsdClient
+	//Statsd StatsdClient
 	Config Config
 	Results Results
 	NumResults uint64
@@ -34,7 +34,7 @@ func (r *Requestor) NewRequest() (http.Request, error) {
 	return *req, err
 }
 
-func NewRequestor(config *Config, statsd StatsdClient) (Requestor, error) {
+func NewRequestor(config *Config) (Requestor, error) {
 	var apigeeToken string
 	var requestor Requestor
 	var err error
@@ -52,7 +52,6 @@ func NewRequestor(config *Config, statsd StatsdClient) (Requestor, error) {
 		EndPoint: config.Endpoint,
 		ApigeeToken: apigeeToken,
 		Apigee: config.Apigee,
-		Statsd: statsd,
 		Config: *config,
 		Nonce: config.Nonce,
 	}
@@ -90,7 +89,7 @@ func (r *Requestor) MakeRequest() (Results, error) {
 	for i := 0; i < cap(res); i++ {
 		r.Results[i] = <-res
 		r.NumResults += 1
-		r.Statsd.Timing(r.Results[i].Duration, r.Results[i].ReadTime)
+		//r.Statsd.Timing(r.Results[i].Duration, r.Results[i].ReadTime)
 	}
 	close(res)
 

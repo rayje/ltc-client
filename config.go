@@ -25,8 +25,8 @@ type EndPoint struct {
 	Route string `json:"route"`
 	Host  string `json:"host"`
 	Port  string `json:"port"`
-	Name  string `json:"name"`
-	Zone  string `json:"zone"`
+	// Name  string `json:"name"`
+	// Zone  string `json:"zone"`
 	Type  string `json:"zone"`
 	Protocol string `json:protocol"`
 }
@@ -53,10 +53,10 @@ func getConfig() Config {
 	rate := flag.Float64("rate", 1.0, "Requests per second")
 	duration := flag.Duration("duration", 1*time.Second, "Duration of the test")
 
-	client := flag.String("client", "localhost", "The name of the client server")
-	clientzone := flag.String("clientzone", "us-east-1b", "The name of the client server")
-	target := flag.String("target", "localhost", "The name of the target (for graphite)")
-	targetzone := flag.String("targetzone", "us-east-1b", "The name of the aws zone (for graphite)")
+	// client := flag.String("client", "localhost", "The name of the client server")
+	// clientzone := flag.String("clientzone", "us-east-1b", "The name of the client server")
+	// target := flag.String("target", "localhost", "The name of the target (for graphite)")
+	// targetzone := flag.String("targetzone", "us-east-1b", "The name of the aws zone (for graphite)")
 
 	fan := flag.Bool("fan", false, "Report fan in final results")
 	nonce := flag.Bool("nonce", false, "Use a nonce for each request")
@@ -79,9 +79,9 @@ func getConfig() Config {
 		os.Exit(1)
 	}
 
-	config.setEndpoint(*route, *host, *port, *target, *targetzone, *https)
+	config.setEndpoint(*route, *host, *port, *https)
 	config.setRateDuration(*rate, *duration)
-	config.setClient(*client, *clientzone)
+	// config.setClient(*client)
 	config.setReportInterval(*reportInterval)
 	config.Nonce = *nonce
 	config.UseApigee = *apigee
@@ -90,7 +90,7 @@ func getConfig() Config {
 	return config
 }
 
-func (c *Config) setEndpoint(route string, host string, port string, name string, zone string, https bool) {
+func (c *Config) setEndpoint(route string, host string, port string, https bool) {
 	var emptyEndPoint = EndPoint{}
 
 	if c.Endpoint == emptyEndPoint {
@@ -98,8 +98,8 @@ func (c *Config) setEndpoint(route string, host string, port string, name string
 			Route: route,
 			Host:  host,
 			Port:  port,
-			Name:  name,
-			Zone:  zone,
+			// Name:  name,
+			// Zone:  zone,
 		}
 		c.Endpoint = endpoint
 	}
@@ -121,15 +121,11 @@ func (c *Config) setRateDuration(rate float64, duration time.Duration) {
 	}
 }
 
-func (c *Config) setClient(client string, zone string) {
-	if c.Client == "" {
-		c.Client = client
-	}
-
-	if c.Zone == "" {
-		c.Zone = zone
-	}
-}
+// func (c *Config) setClient(client string) {
+// 	if c.Client == "" {
+// 		c.Client = client
+// 	}
+// }
 
 func (c *Config) setReportInterval(interval time.Duration) {
 	if c.ReportInterval == 0 {

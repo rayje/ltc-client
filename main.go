@@ -7,8 +7,7 @@ import (
 
 func main() {
 	config := getConfig()
-	statsd := NewStatsd(&config)
-	requestor, err := NewRequestor(&config, statsd)
+	requestor, err := NewRequestor(&config)
 	if err != nil {
 		fmt.Println(err)
 		return
