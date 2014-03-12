@@ -33,7 +33,7 @@ func runRequest(req *http.Request, res chan Result, nonce bool) {
 		if body, err := ioutil.ReadAll(r.Body); err != nil {
 			fmt.Println(err)
 		} else {
-			if result.Code != uint16(200) {
+			if result.Code == 200 {
 				result.BytesIn = uint64(len(body))
 				result.ReadTime, err = time.ParseDuration(r.Header.Get("ReadTime"))
 				if err != nil {
