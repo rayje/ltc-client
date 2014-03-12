@@ -42,7 +42,8 @@ func runRequest(req *http.Request, res chan Result, nonce bool) {
 				result.ReadTimes = r.Header.Get("ReadTimes")
 				result.FanDuration = getDurations(r)
 			} else {
-				printError(req, r, string(body), "Invalid Status Code: " + result.Code)
+				fmt.Println(result.Code)
+				printError(req, r, string(body), "Invalid Status Code")
 			}
 		}
 	}
