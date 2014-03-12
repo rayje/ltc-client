@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"net"
 )
 
 type Requestor struct {
@@ -19,7 +20,23 @@ type Requestor struct {
 	Nonce bool
 }
 
-var client = &http.Client{}
+
+var t = &http.Transport{
+	Dial: func (network, addr string) (net.Conn, error) {
+		c, err := net.Dial(network, addr)
+		if c == nil {
+			fmt.Println("No Connection")
+			return c, err
+		}
+
+		remote := c.RemoteAddr()
+		if remote != nil {
+			fmt.Printf("Remote: %s : %s\n",remote.String(), addr)
+		}
+		return c, err
+	},
+}
+var client = &http.Client{Transport: t}
 
 func (r *Requestor) NewRequest() (http.Request, error) {
 	req, err := http.NewRequest("GET", r.Url(), nil)
