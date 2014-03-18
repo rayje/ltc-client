@@ -66,17 +66,20 @@ func getConfig() Config {
 	https := flag.Bool("https", false, "Use https as the transfer protocol.")
 	flag.Parse()
 
-	file, err := ioutil.ReadFile(*configFile)
-	if err != nil {
-		fmt.Printf("File error: %v\n", err)
-		os.Exit(1)
-	}
-
 	var config Config
-	err = json.Unmarshal(file, &config)
-	if err != nil {
-		fmt.Printf("JSON error: %v\n", err)
-		os.Exit(1)
+
+	if *apigee {
+		file, err := ioutil.ReadFile(*configFile)
+		if err != nil {
+			fmt.Printf("File error: %v\n", err)
+			os.Exit(1)
+		}
+
+		err = json.Unmarshal(file, &config)
+		if err != nil {
+			fmt.Printf("JSON error: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	config.setEndpoint(*route, *host, *port, *https)
