@@ -48,10 +48,7 @@ func getUrl() string {
 }
 
 func main() {
-	var t =  &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		Dial: DialMethod,
-	}
+	var t =  &http.Transport{Dial: DialMethod}
 	var client = &http.Client{Transport: t}
 	var url = getUrl()
 
