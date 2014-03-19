@@ -65,26 +65,3 @@ func getApigeeToken(config *Config) (string, error) {
 
   	return apigee.ApigeeToken, nil
 }
-
-// type Apigee struct {
-// 	Email string `json:"email"`
-// 	Password string `json:"password"`
-// }
-
-// type Config struct {
-// 	Apigee   Apigee        `json:"apigee"`
-// }
-
-// func main() {
-// 	apigee := &Apigee{
-// 		Email: "self.matt+pearsonu@gmail.com",
-// 		Password: "ilOQSN8y",
-// 	}
-
-// 	config := &Config{
-// 		Apigee: *apigee,
-// 	}
-
-// 	token, _ := getToken(config)
-// 	fmt.Println(token)
-// }
