@@ -45,7 +45,7 @@ The following is an example of the reports generated from the captured round tri
 		iqr:	301.426us		0
 	==============================
 
-Along with this report, the capture timed are dumped to a file named ```results.txt```. If the ```rint``` flag is not set to ```0```, the dumped times are sorted.
+Along with this report, the capture times are dumped to a file named ```results.txt```. If the ```rint``` flag is not set to ```0```, the dumped times are sorted.
 
 ## Usage:
 
