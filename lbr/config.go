@@ -25,7 +25,7 @@ type EndPoint struct {
 type Config struct {
 	Apigee         ApigeeConfig  `json:"apigee"`
 	UseApigee      bool          `json:"useapigee"`
-	Endpoint       EndPoint      `json:"endpoint"`
+	EndPoint       EndPoint      `json:"endpoint"`
 }
 
 func getConfig() Config {
@@ -64,18 +64,18 @@ func getConfig() Config {
 func (c *Config) setEndpoint(route string, host string, port string, https bool) {
 	var emptyEndPoint = EndPoint{}
 
-	if c.Endpoint == emptyEndPoint {
+	if c.EndPoint == emptyEndPoint {
 		endpoint := EndPoint{
 			Route: route,
 			Host:  host,
 			Port:  port,
 		}
-		c.Endpoint = endpoint
+		c.EndPoint = endpoint
 	}
 
 	if https {
-		c.Endpoint.Protocol = "https"
+		c.EndPoint.Protocol = "https"
 	} else {
-		c.Endpoint.Protocol = "http"
+		c.EndPoint.Protocol = "http"
 	}
 }
