@@ -5,9 +5,8 @@ import (
 	"net/http"
 	"os"
 	"net"
+	"crypto/tls"
 	"time"
-	"bytes"
-	"flag"
 )
 
 var timeout = time.Duration(5 * time.Second)
@@ -25,32 +24,59 @@ func DialMethod(network, addr string) (net.Conn, error) {
 	} else {
 		fmt.Printf("RemoteAddr not set ")
 	}
+
+	c.SetDeadline(time.Now().Add(timeout));
 	return c, err
 }
 
-func getUrl() string {
-	route := flag.String("route", "med", "The route to call on the server (small|med|large|xlarge)")
-	host := flag.String("host", "localhost", "The host of the server")
-	port := flag.String("port", "80", "The port of the host server")
-	flag.Parse()
+func getUrl(config *Config) (string, error) {
+	var apigeeToken string
+	var err error
 
-	var buffer bytes.Buffer
-	buffer.WriteString("http://")
-	buffer.WriteString(*host)
-	if *port != "80" {
-		buffer.WriteString(":")
-		buffer.WriteString(*port)
+	if config.UseApigee {
+		apigeeToken, err = getApigeeToken(config)
+		if err != nil {
+			return "", err
+		}
 	}
-	buffer.WriteString("/")
-	buffer.WriteString(*route)
 
-	return buffer.String()
+	if apigeeToken != "" {
+		return fmt.Sprintf("%s/%s?apikey=%s",
+			config.Apigee.Apiurl, config.EndPoint.Route, config.Apigee.Apikey), nil
+	} else {
+		return fmt.Sprintf("%s://%s:%s/%s",
+			config.EndPoint.Protocol, config.EndPoint.Host,
+			config.EndPoint.Port, config.EndPoint.Route), nil
+	}
+}
+
+func getTransport(config *Config) http.RoundTripper {
+	var t http.RoundTripper
+
+	if config.UseApigee || config.EndPoint.Protocol == "https" {
+		t = &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			Dial: DialMethod,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+ 	} else {
+ 		t = &http.Transport{Dial: DialMethod}
+ 	}
+
+	return t
 }
 
 func main() {
-	var t =  &http.Transport{Dial: DialMethod}
+	config := getConfig()
+
+	var t = getTransport(&config);
 	var client = &http.Client{Transport: t}
-	var url = getUrl()
+	url, err := getUrl(&config)
+	if err != nil {
+		fmt.Println("Error building URL")
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	req, e := http.NewRequest("GET", url, nil)
 	if e != nil {
