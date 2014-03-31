@@ -13,6 +13,7 @@ type ApigeeConfig struct {
 	Password string `json:"password"`
 	Apikey   string `json:"apikey"`
 	Apiurl   string `json:"apiurl"`
+	Token    string `json:"token"`
 }
 
 type EndPoint struct {

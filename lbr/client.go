@@ -30,17 +30,15 @@ func DialMethod(network, addr string) (net.Conn, error) {
 }
 
 func getUrl(config *Config) (string, error) {
-	var apigeeToken string
-	var err error
-
 	if config.UseApigee {
-		apigeeToken, err = getApigeeToken(config)
+		apigeeToken, err := getApigeeToken(config)
 		if err != nil {
 			return "", err
 		}
+		config.Apigee.Token = apigeeToken
 	}
 
-	if apigeeToken != "" {
+	if config.Apigee.Token != "" {
 		return fmt.Sprintf("%s/%s?apikey=%s",
 			config.Apigee.Apiurl, config.EndPoint.Route, config.Apigee.Apikey), nil
 	} else {
@@ -66,6 +64,20 @@ func getTransport(config *Config) http.RoundTripper {
 	return t
 }
 
+func newRequest(config *Config, url string) (http.Request, error) {
+	fmt.Println(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return *req, err
+	}
+
+	if config.Apigee.Token != "" {
+		req.Header.Set("Authorization", "Bearer " + config.Apigee.Token)
+	}
+
+	return *req, err
+}
+
 func main() {
 	config := getConfig()
 
@@ -78,7 +90,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	req, e := http.NewRequest("GET", url, nil)
+	req, e := newRequest(&config, url)
 	if e != nil {
 		fmt.Println("Error creating request")
 		fmt.Println(e)
@@ -86,7 +98,7 @@ func main() {
 	}
 
 	start := time.Now()
-	resp, err := client.Do(req)
+	resp, err := client.Do(&req)
 	duration := time.Since(start)
 
 	if err != nil {
