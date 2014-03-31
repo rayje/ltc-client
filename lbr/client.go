@@ -65,7 +65,6 @@ func getTransport(config *Config) http.RoundTripper {
 }
 
 func newRequest(config *Config, url string) (http.Request, error) {
-	fmt.Println(url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return *req, err
