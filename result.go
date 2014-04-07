@@ -15,6 +15,7 @@ type Result struct {
 	ReadTime  time.Duration
 	FanDuration []int64
 	ReadTimes string
+	Server string
 }
 
 type Results []Result

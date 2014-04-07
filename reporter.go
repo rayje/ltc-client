@@ -86,7 +86,8 @@ func dumpToFile(results []Result) {
     }()
 
     for _, result := range results {
-    	_, err := f.WriteString(fmt.Sprintf("%d", result.Duration.Nanoseconds()) + "\n")
+    	_, err := f.WriteString(fmt.Sprintf("%d,%s\n",
+    		result.Duration.Nanoseconds(), result.Server))
     	check(err)
     }
 }

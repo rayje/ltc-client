@@ -40,6 +40,7 @@ func runRequest(req *http.Request, res chan Result, nonce bool) {
 					printError(req, r, string(body), "Error parsing read time")
 				}
 				result.ReadTimes = r.Header.Get("ReadTimes")
+				result.Server = r.Header.Get("ServerName")
 				result.FanDuration = getDurations(r)
 			} else {
 				fmt.Println(result.Code)
