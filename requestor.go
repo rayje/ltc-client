@@ -136,7 +136,7 @@ func tokenRefresh(config *Config, req *http.Request, done chan string) {
 }
 
 func runRequests(rate float64, req *http.Request, res chan Result, total uint64, done chan string, nonce bool) {
-	throttle := time.Tick(time.Duration(1e9 / rate))
+	throttle := time.Tick(time.Duration(time.Second.Nanoseconds() / rate))
 	fmt.Println("Throttle:", time.Duration(1e9 / rate))
 
 	for i := 0; uint64(i) < total; i++ {
