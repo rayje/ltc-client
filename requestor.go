@@ -2,27 +2,26 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"time"
-	"net"
 )
 
 type Requestor struct {
-	Rate     float64
-	Duration time.Duration
-	EndPoint EndPoint
+	Rate        float64
+	Duration    time.Duration
+	EndPoint    EndPoint
 	ApigeeToken string
-	Apigee ApigeeConfig
+	Apigee      ApigeeConfig
 	//Statsd StatsdClient
-	Config Config
-	Results Results
+	Config     Config
+	Results    Results
 	NumResults uint64
-	Nonce bool
+	Nonce      bool
 }
 
-
 var t = &http.Transport{
-	Dial: func (network, addr string) (net.Conn, error) {
+	Dial: func(network, addr string) (net.Conn, error) {
 		c, err := net.Dial(network, addr)
 		if c == nil {
 			fmt.Println("No Connection")
@@ -31,7 +30,7 @@ var t = &http.Transport{
 
 		remote := c.RemoteAddr()
 		if remote != nil {
-			fmt.Printf("Remote: %s : %s\n",remote.String(), addr)
+			fmt.Printf("Remote: %s : %s\n", remote.String(), addr)
 		}
 		return c, err
 	},
@@ -45,7 +44,7 @@ func (r *Requestor) NewRequest() (http.Request, error) {
 	}
 
 	if r.ApigeeToken != "" {
-		req.Header.Set("Authorization", "Bearer " + r.ApigeeToken)
+		req.Header.Set("Authorization", "Bearer "+r.ApigeeToken)
 	}
 
 	return *req, err
@@ -64,13 +63,13 @@ func NewRequestor(config *Config) (Requestor, error) {
 	}
 
 	requestor = Requestor{
-		Rate:     config.Rate,
-		Duration: config.Duration,
-		EndPoint: config.Endpoint,
+		Rate:        config.Rate,
+		Duration:    config.Duration,
+		EndPoint:    config.Endpoint,
 		ApigeeToken: apigeeToken,
-		Apigee: config.Apigee,
-		Config: *config,
-		Nonce: config.Nonce,
+		Apigee:      config.Apigee,
+		Config:      *config,
+		Nonce:       config.Nonce,
 	}
 
 	return requestor, nil
@@ -123,28 +122,27 @@ func tokenRefresh(config *Config, req *http.Request, done chan string) {
 	for {
 		select {
 		case <-done:
-		    return
+			return
 		case <-refresh:
 			token, err := getApigeeToken(config)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
-			req.Header.Set("Authorization", "Bearer " + token)
+			req.Header.Set("Authorization", "Bearer "+token)
 		}
 	}
 }
 
 func runRequests(rate float64, req *http.Request, res chan Result, total uint64, done chan string, nonce bool) {
-	throttle := time.Tick(time.Duration(time.Second.Nanoseconds() / rate))
-	fmt.Println("Throttle:", time.Duration(1e9 / rate))
+	fnano := float64(time.Second.Nanoseconds())
+	throttle := time.Tick(time.Duration(fnano / rate))
+	fmt.Println("Throttle:", time.Duration(1e9/rate))
 
 	for i := 0; uint64(i) < total; i++ {
 		<-throttle
-		go runRequest(req, res, nonce)
+		go RunRequest(req, res, nonce)
 	}
 
 	done <- "done"
 }
-
-

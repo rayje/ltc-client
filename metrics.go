@@ -1,18 +1,18 @@
 package main
 
 import (
-	"sort"
 	"math"
+	"sort"
 	"time"
 )
 
 type Metrics struct {
-	Results []Result
-	Min time.Duration
-	Max time.Duration
+	Results  []Result
+	Min      time.Duration
+	Max      time.Duration
 	TotalRtt time.Duration
-	Mean float64
-	Total float64
+	Mean     float64
+	Total    float64
 }
 
 func NewMetrics(results []Result) Metrics {
@@ -33,15 +33,15 @@ func NewMetrics(results []Result) Metrics {
 	}
 
 	total := float64(len(results))
-	mean := float64(totalRtt)/total
+	mean := float64(totalRtt) / total
 
 	metric := Metrics{
-		Results: results,
-		Min: min,
-		Max: max,
+		Results:  results,
+		Min:      min,
+		Max:      max,
 		TotalRtt: totalRtt,
-		Mean: mean,
-		Total: total,
+		Mean:     mean,
+		Total:    total,
 	}
 
 	return metric
@@ -56,7 +56,7 @@ func (c *Metrics) StdDev() float64 {
 	m := float64(time.Duration(c.Mean).Nanoseconds())
 
 	for _, result := range c.Results {
-		diffs += math.Pow(float64(result.Duration.Nanoseconds()) - m, 2)
+		diffs += math.Pow(float64(result.Duration.Nanoseconds())-m, 2)
 	}
 
 	variance := diffs / c.Total
@@ -73,13 +73,12 @@ func (c *Metrics) GetPercentile(p float64) time.Duration {
 
 	v1 := float64(c.Results[int(ir)-1].Duration.Nanoseconds())
 
-	if fr > 0.0 && ir < float64(len(c.Results)){
+	if fr > 0.0 && ir < float64(len(c.Results)) {
 		v2 := float64(c.Results[int(ir)].Duration.Nanoseconds())
-		percentile = (v2 - v1) * fr + v1
+		percentile = (v2-v1)*fr + v1
 	} else {
 		percentile = v1
 	}
 
 	return time.Duration(percentile)
 }
-
